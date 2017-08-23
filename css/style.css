@@ -1,0 +1,42 @@
+* {
+	margin: 0;
+	padding: 0;
+}
+body {
+	font-size: 12px;
+	font-family: Arial;
+}
+div.content {
+	width: 800px;
+	height: 600px;
+	position: relative;
+	overflow: hidden;
+	background-color: black;
+	margin: 20px auto;
+}
+div.beeGame {
+	width: 100px;
+	height: 30px;
+	color: #fff;
+	font-size: 20px;
+	border: 1px solid #fff;
+	position: relative;
+	margin: 0 auto;
+	top: 250px;
+	cursor: pointer;
+	text-align: center;
+	line-height: 30px;
+}
+#score {
+	color: #fff;
+}
+
+.bullet {
+	position: absolute;
+	width: 1px;
+	height: 10px;
+	background: white;
+	z-index: 2;
+	overflow: hidden;
+	
+}
