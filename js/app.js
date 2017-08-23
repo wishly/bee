@@ -25,7 +25,7 @@ var Game = {
 				colNum : 10,
 				iSpeedX : 10,
 				iSpeedY : 10,
-				times : 500
+				times : 3000
 			},
 			{
 				eMap : [                                          
@@ -39,7 +39,7 @@ var Game = {
 				colNum : 10,
 				iSpeedX : 20,
 				iSpeedY : 20,
-				times : 400
+				times : 2000
 			},
 			
 		],
@@ -62,6 +62,7 @@ var Game = {
 				this.createScore();
 				this.createEnemy( 0 );
 				this.createAir();
+				
 		},
 		createScore : function() {	//积分的创建
 			var $oS = $("<div id = 'score'>积分：<span>0</span></div>").appendTo(this.oParent);
@@ -69,6 +70,10 @@ var Game = {
 //			console.log($oS.children("span").html());
 		},
 		createEnemy: function( iNow ) { //敌人创建
+			if( this.oUl ) {
+				this.oUl.remove();
+				clearInterval( this.oUl.timer );
+			}
 			var _this = this,
 				gk = this.gk[ iNow ],
 				$oUl = $("<ul></ul>").attr("id", "bee").css({
@@ -131,7 +136,7 @@ var Game = {
 				speedY = gk.iSpeedY;
 //				console.log(speed);
 //				console.log( _this.gk[ _this.iNow ].iSpeedX );
-				_this.timer = setInterval(function(){
+				_this.oUl.timer = setInterval(function(){
 //					console.log(_this.gk[ _this.iNow ].iSpeedX);
 //					console.log( $("#bee").position().left );
 				var posLeft = $("#bee").position().left,
@@ -152,21 +157,47 @@ var Game = {
 						instance = Math.ceil( instance );
 //						console.log(instance);
 					$("#bee").animate({left: instance}, 100);
-			}, gk.times);
+			}, 500);
+			setInterval( function() {
+				_this.oneMove();
+			}, gk.times );
 		},
-
+		oneMove: function() {
+			var _this = this,
+				$oLi = $("#bee li"),
+				nowLi = Math.floor( Math.random() * $oLi.length );
+				$oLi[ nowLi ].timer = setInterval(function() {
+					var a = ( _this.oAir.position().left + _this.oAir.width() / 2 ) - ( $oLi.eq( nowLi ).position().left + $oLi.eq( nowLi ).parent().position().left + $oLi.eq( nowLi ).width() / 2 );
+					var b = ( _this.oAir.position().top + _this.oAir.height() / 2 ) - ( $oLi.eq( nowLi ).position().top + $oLi.eq( nowLi ).parent().position().top + $oLi.eq( nowLi ).height() / 2 );
+					var c = Math.sqrt(a*a + b*b);
+					
+					var speedX = parseInt( $oLi.eq( nowLi ).attr("speed") ) * a/c;
+					var speedY = parseInt( $oLi.eq( nowLi ).attr("speed") ) * b/c;
+					
+//					console.log( speedX );
+//					console.log( speedY );
+					$oLi.eq( nowLi ).animate({
+						left: speedX + $oLi.eq( nowLi ).position().left,
+						top: speedY + $oLi.eq( nowLi ).position().top
+					}, 20);
+					if( _this.attack( _this.oAir, $oLi[ nowLi ] ) ) {
+						alert("游戏结束");
+						location.reload();
+					}
+				}, 30);
+		},
 		createAir: function() {//飞机的创建
-			var _this = this;
-			this.oAir = $("<div></div>").addClass(this.air.style.name).css({
-				position: "absolute",
-				width: this.air.style.width,
-				height: this.air.style.height,
-				background: "url( "+ this.air.style.airUrl +" ) no-repeat",
-				left: ( $( this.oParent ).width() - parseInt( this.air.style.width ) ) / 2,
-				top: ( $( this.oParent ).height() - parseInt( this.air.style.height ) ),
-				cursor: "pointer",
-				zIndex: "2"
-			});
+				var oAir = $("<div></div>").addClass(this.air.style.name).css({
+					position: "absolute",
+					width: this.air.style.width,
+					height: this.air.style.height,
+					background: "url( "+ this.air.style.airUrl +" ) no-repeat",
+					left: ( $( this.oParent ).width() - parseInt( this.air.style.width ) ) / 2,
+					top: ( $( this.oParent ).height() - parseInt( this.air.style.height ) ),
+					cursor: "pointer",
+					zIndex: "2"
+				});
+			this.oAir = oAir;
 			this.oAir.appendTo( this.oParent );
 			this.moveAir();
 		},
@@ -213,14 +244,14 @@ var Game = {
 		},
 		createBullet: function() { //创建子弹
 			var _this = this,
-				$air = $air = $(" " + "." + _this.air.style.name + " ");
+				$air = $(" " + "." + _this.air.style.name + " ");
 			setInterval(function(){
 				$oB = $("<div class=bullet></div>").css({
 					left: $air.position().left + $air.width() / 2,
 					top: $air.position().top - 10,
 				}).appendTo( _this.oParent );
 				_this.runBullet( $oB );
-			}, 200);
+			}, 300);
 		},
 		runBullet: function( $oB ) {  //子弹运动
 			var _this = this,
@@ -242,6 +273,7 @@ var Game = {
 						
 						if( parseInt( oLi[ i ].getAttribute("blood") ) === 1 ){
 //							console.log(oLi[i].getAttribute("blood"));
+							clearInterval( $( oLi[ i ] ).timer );
 							score.innerHTML = parseInt( score.innerHTML) + parseInt( oLi[ i ].getAttribute( "score" ) );
 //							console.log( parseInt(score.innerHTML));
 							oLi[ i ].parentNode.removeChild( oLi[ i ] );
@@ -252,13 +284,21 @@ var Game = {
 						clearInterval( $oB.timer );
 						$oB.timer = null;
 						$oB.remove();
-						
+						if( !oLi.length ) {
+							_this.createEnemy( 1 );
+						}
 					}
 				}
 				
 			}, 30);
 		},
 		attack: function( obj1 , obj2 ) {
+			if( obj1 instanceof jQuery) {
+				obj1 = obj1.get( 0 );
+			}
+			if( obj2 instanceof jQuery ) {
+				obj2 = obj2.get( 0 );
+			}
 			var left1 = obj1.offsetLeft;
 			var right1 = obj1.offsetLeft + obj1.offsetWidth;
 			var top1 = obj1.offsetTop;
